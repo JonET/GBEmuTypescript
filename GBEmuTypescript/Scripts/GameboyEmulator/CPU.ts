@@ -1,97 +1,115 @@
 ///<reference path="MMU.ts"/>
 
 module GameboyEmulator {
-    // Emulates a Gameboy Z80
 
+    // Emulates a Gameboy Z80
     export class CPU {
-        private _mmu: MMU;
-        private _opcodeMap: { [s: any]: (c: CPU) => void; };
+        private mmu: MMU;
+        private _opcodeMap: { (c: CPU): void; }[];
         private _cbMap: { [s: any]: (c: CPU) => void; };
 
-        public counters = {
-            cycles: 0,      // T-Counter -- I'm not sure how useful this is.
-            machine: 0      // M-Counter
-        };
+        public A: number = 0;
+        public B: number = 0;  
+        public C: number = 0;
+        public D: number = 0;
+        public E: number = 0;
+        public H: number = 0;
+        public L: number = 0;
 
-        public registers = {
-            // 8-bit registers
-            a: 0,           // accumulator
-            f: 0,           // flag
-            b: 0,           // general-purpose
-            c: 0,           // general-purpose
-            d: 0,           // general-purpose
-            e: 0,           // general-purpose
-            h: 0,           // general-purpose
-            l: 0,           // general-purpose 
+        public PC: number = 0;
+        public SP: number = 0;
 
-            // 16-bit registers
-            pc: 0,          // program counter
-            sp: 0,          // stack pointer
+        public Count: number = 0;   // program count in machine cycles
 
-            // time taken for the last instruction to execute
-            // (to be added to the counters)
-            cycles: 0,
-            machine: 0
-        };
+        public FZ: bool = false;    // 0x80 zero
+        public FN: bool = false;    // 0x40 negative
+        public FH: bool = false;    // 0x20 half-carry
+        public FC: bool = false;    // 0x10 carry
+
+        public get F(): number {
+            return (Number(this.FZ) << 7) |
+                   (Number(this.FN) << 6) |
+                   (Number(this.FH) << 6) |
+                   (Number(this.FC) << 5);
+        }
+
+        public set F(value: number) {
+            this.FZ = (value & 0x80) === 0x80;
+            this.FN = (value & 0x40) === 0x40;
+            this.FH = (value & 0x20) === 0x20;
+            this.FC = (value & 0x10) === 0x10;
+        }
+
+        public get AF(): number {
+            return (this.A << 8) + this.F;
+        }
+
+        public get HL(): number {
+            return (this.H << 8) + this.L;
+        }
+
+        public get BC(): number {
+            return (this.B << 8) + this.C;
+        }
+
+        public get DE(): number {
+            return (this.D << 8) + this.E;
+        }
 
         // pretty prints registers together as hex as a debugging aid
-        public get AF(): String {
-            var hexstring = zeroPad(this.registers.a.toString(16).substr(0, 2), 2) +
-                            zeroPad(this.registers.f.toString(16).substr(0, 2), 2);
+        public get AFh(): String {
+            var hexstring = zeroPad(this.A.toString(16).substr(0, 2), 2) +
+                            zeroPad(this.F.toString(16).substr(0, 2), 2);
             return hexstring;
         }
 
-        public get BC(): String {
-            var hexstring = zeroPad(this.registers.b.toString(16).substr(0, 2), 2) +
-                            zeroPad(this.registers.c.toString(16).substr(0, 2), 2);
+        public get BCh(): String {
+            var hexstring = zeroPad(this.B.toString(16).substr(0, 2), 2) +
+                            zeroPad(this.C.toString(16).substr(0, 2), 2);
             return hexstring;
         }
 
-        public get DE(): String {
-            var hexstring = zeroPad(this.registers.d.toString(16).substr(0, 2), 2) +
-                            zeroPad(this.registers.e.toString(16).substr(0, 2), 2);
+        public get DEh(): String {
+            var hexstring = zeroPad(this.D.toString(16).substr(0, 2), 2) +
+                            zeroPad(this.E.toString(16).substr(0, 2), 2);
             return hexstring;
         }
 
-        public get HL(): String {
-            var hexstring = zeroPad(this.registers.h.toString(16).substr(0, 2), 2) +
-                            zeroPad(this.registers.l.toString(16).substr(0, 2), 2);
+        public get HLh(): String {
+            var hexstring = zeroPad(this.H.toString(16).substr(0, 2), 2) +
+                            zeroPad(this.L.toString(16).substr(0, 2), 2);
             return hexstring;
         }
 
         constructor (mmu: MMU) {
-            this._mmu = mmu;
+            this.mmu = mmu;
             this.createOpcodeMap();
         }
 
+
         private createOpcodeMap() {
-            this._opcodeMap = {
-                0x00: this.nop,
-                0x01: this.ldBcNn,
-                0x06: this.ldBN,
-                0x0C: this.incC,
-                0x0E: this.ldCN,
-                0x11: this.ldDeNn,
-                0x1A: this.ldADEr,
-                0x20: this.jrNzN,
-                0x21: this.ldHlNn,
-                0x31: this.ldSpNn,
-                0x32: this.lddHlA,
-                0x3E: this.ldAN,
-                0x4F: this.ldCA,
-                0x77: this.ldHlA,
-                0xAF: this.xorA,                
-                0xC5: this.pushBC,
-                0xCB: this.executeCB,
-                0xCD: this.callNn,
-                0xD5: this.pushDE,
-                0xE0: this.ldhNA,
-                0xE2: this.ldCpA,
-                0xF5: this.pushAF,                
-            };
+            this._opcodeMap = [
+                    //x0                //x1                //x2                //x3                //x4                //x5                //x6                //x7                   //x8                 //x9                //xA                //xB                //xC                //xD                //xE                //xF
+            /*0x*/  this.NOP,           this.LD_BC_d16,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.LD_B_d8,       this.notImpl,   /*0x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.INC_C,         this.notImpl,       this.LD_C_N,        this.notImpl,
+            /*1x*/  this.notImpl,       this.LD_DE_d16,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*1x*/ this.notImpl,        this.notImpl,       this.LD_A_DEm,      this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*2x*/  this.JR_NZ_r8,      this.LD_HL_d16,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*2x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*3x*/  this.notImpl,       this.LD_SP_d16,     this.LD_HLmd_A,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*3x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.LD_A_d8,       this.notImpl,
+            /*4x*/  this.LD_B_B,        this.LD_B_C,        this.LD_B_D,        this.LD_B_E,        this.LD_B_H,        this.LD_B_L,        this.LD_B_HLm,      this.LD_B_A,    /*4x*/ this.LD_C_B,         this.LD_C_C,        this.LD_C_D,        this.LD_C_E,        this.LD_C_H,        this.LD_C_L,        this.LD_C_HLm,      this.LD_C_A,
+            /*5x*/  this.LD_D_B,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*5x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*6x*/  this.LD_H_B,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*6x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*7x*/  this.LD_HLm_B,      this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.LD_HLm_A,  /*7x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*8x*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*8x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*9x*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*9x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Ax*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Ax*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.XOR_A,
+            /*Bx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Bx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Cx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_BC,       this.notImpl,       this.notImpl,   /*Cx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.EXEC_CB,       this.notImpl,       this.CALL_16a,      this.notImpl,       this.notImpl,
+            /*Dx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_DE,       this.notImpl,       this.notImpl,   /*Dx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Ex*/  this.LDH_a8m_A,     this.notImpl,       this.LD_Cm_A,       this.notImpl,       this.notImpl,       this.PUSH_HL,       this.notImpl,       this.notImpl,   /*Ex*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Fx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_AF,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl    ];
 
             this._cbMap = {
-                0x7C: this.bit7H,
+                0x7C: this.BIT_7H,
+                0x11: this.CB_RL_C
             };
         }
 
@@ -99,296 +117,363 @@ module GameboyEmulator {
 
             while (true) {
                 // fetch
-                var opCode = this._mmu.readByte(this.registers.pc);
-                this.registers.pc += 1;
+                var opCode = this.mmu.readByte(this.PC);
+                this.PC += 1;
 
                 // decode
-                if (this._opcodeMap[opCode] === undefined) {
+                if (this._opcodeMap[opCode] === undefined || this._opcodeMap[opCode] === this.notImpl) {
                     alert("Missing Opcode: " + zeroPad(opCode.toString(16), 2));
                     return;
                 }
 
                 var operation = this._opcodeMap[opCode];
 
-                this.counters.cycles += this.registers.cycles;
-                this.counters.machine += this.registers.machine;
+                //this.counters.machine += this.count;
 
                 // execute
                 operation(this);
             }
         }
 
+        // == MISC/CONTROL INSTRUCTIONS ==
+
+        notImpl(cpu: CPU) {
+            // placeholder
+        }
+
         // 0x00 NOP
-        nop(cpu: CPU) {
-            var r = cpu.registers
-            r.machine = 1,
-            r.cycles = 4
+        NOP(cpu: CPU) {
+            cpu.Count += 1;
         }
 
+        // 0x01 STOP 0
 
-        // 0x0C INC C
-        incC(cpu: CPU) {
-            var r = cpu.registers;
-            
-            // check to see if this is going to cause some nibbles to overflow
-            if ((r.c & 0xf) === 0xf) {
-                r.f |= 0x20;    // set half carry
-            }
-            else {
-                r.f &= ~0x20;   // reset half carry
-            }
-
-            r.c++;
-            r.c &= 0xFF;
-
-            if (r.c === 0) {
-                r.f |= 0x80;    // set Z
-            }
-            else {
-                r.f &= ~0x80;   // reset Z
-            }
-
-            r.f &= ~0x40; // reset N
-
-            r.machine = 1,
-            r.cycles = 4
-        }
-            
-        // 0x0E LD C n
-        ldCN(cpu: CPU) {
-            var r = cpu.registers;
-            r.c = cpu._mmu.readByte(r.pc++);
-            r.machine = 2,
-            r.cycles = 8
-        }
-
-        // 0x3E LD A n
-        ldAN(cpu: CPU) {
-            var r = cpu.registers;
-            r.a = cpu._mmu.readByte(r.pc++);
-            r.machine = 2,
-            r.cycles = 8
-        }
-
-        // 0x06 LD B,d8
-        ldBN(cpu: CPU) {
-            var r = cpu.registers;
-            r.b = cpu._mmu.readByte(r.pc++);
-            r.machine = 2,
-            r.cycles = 8
-        }
-
-        // 0x4F LD C,A
-        ldCA(cpu: CPU) {
-            var r = cpu.registers;
-            r.a = r.c;
-            r.machine = 1,
-            r.cycles = 4
-        }
-
-        // 0x20: JR NZ,r8  Relative jump to immediate value if Zero flag not set
-        jrNzN(cpu: CPU) {
-            var r = cpu.registers;
-            var value = cpu._mmu.readByte(r.pc++);           
-
-            r.machine = 2;
-            r.cycles = 8;
-
-            if ((cpu.registers.f & 0x80) === 0) {
-
-                if (value > 127) // negative
-                {
-                    // apply ones compliment and mask to 8 bits to get usable negative value
-                    value = -((~value + 1) & 0xFF);
-                }
-
-                // do the relative jump and add cycles to the clock
-                r.pc += value;
-                r.machine += 1;
-                r.cycles += 4;
-            }
-            else {
-                console.log("done. HL " + cpu.HL);
-            }
-
-
-            // we don't really need to do anything if zero is set            
-        }
-
-        // Call Address
-        callNn(cpu: CPU) {
-            var r = cpu.registers;
-            r.sp -= 2;
-            cpu._mmu.writeWord(r.sp, r.pc + 2);
-            r.pc = cpu._mmu.readWord(r.pc);       
-            r.machine = 6;
-            r.cycles = 24;
-        }
-
-        // Stack Pushers
-
-        // 0xC5
-        pushBC(cpu: CPU) {
-            cpu.push16(cpu, cpu.registers.b, cpu.registers.c);
-        }
-
-        // 0xD5
-        pushDE(cpu: CPU) {
-            cpu.push16(cpu, cpu.registers.d, cpu.registers.e);
-        }
-
-        // 0xE5
-        pushHL(cpu: CPU) {
-            cpu.push16(cpu, cpu.registers.h, cpu.registers.l);
-        }
-
-        // 0xF5
-        pushAF(cpu: CPU) {
-            cpu.push16(cpu, cpu.registers.a, cpu.registers.f);
-        }
-
-        push16(cpu: CPU, a: number, b: number) {
-            var r = cpu.registers;
-            r.sp--;
-            cpu._mmu.writeByte(r.sp, a);
-            r.sp--;
-            cpu._mmu.writeByte(r.sp, b);
-
-            cpu.counters.machine += 4;
-            cpu.counters.cycles += 16;
-        }
-        
-
-        // Load 16 bit immediate into register
-
-        // 0x01: LD BC,d16  Load a 16 bit immediate into DE
-        ldBcNn(cpu: CPU) {
-            var r = cpu.registers;
-            r.b = cpu._mmu.readByte(r.pc++);
-            r.c = cpu._mmu.readByte(r.pc++);
-            r.machine = 3;
-            r.cycles = 12;
-        }
-
-        // 0x11: LD DE,d16  Load a 16 bit immediate into DE
-        ldDeNn(cpu: CPU) {
-            var r = cpu.registers;
-            r.e = cpu._mmu.readByte(r.pc++);
-            r.d = cpu._mmu.readByte(r.pc++);
-            r.machine = 3;
-            r.cycles = 12;
-        }
-
-        // 0x21: LD HL,d16  Load a 16 bit immediate into  HL
-        ldHlNn(cpu: CPU) {
-            var r = cpu.registers;
-            r.l = cpu._mmu.readByte(r.pc++);
-            r.h = cpu._mmu.readByte(r.pc++);
-            r.machine = 3;
-            r.cycles = 12;
-        }        
-
-        // 0x31: LD HL,d16  Load a 16 bit immediate into  SP
-        ldSpNn(cpu: CPU) {
-            var r = cpu.registers;
-            r.sp = cpu._mmu.readWord(r.pc);
-            r.pc += 2;
-            r.machine = 3;
-            r.cycles = 12;
-        }
-
-
-
-        // 0x1A: LD A,(DE)
-        ldADEr(cpu: CPU) {
-            var r = cpu.registers;
-            r.a = cpu._mmu.readByte((r.e << 8) + r.d);
-            r.machine = 1;
-            r.cycles = 4;
-        }
-
-        // 0x77: LD HL A : Write to the memory location at HL with the value of A
-        ldHlA(cpu: CPU) {
-            var r = cpu.registers;
-            cpu._mmu.writeWord((r.h << 8) + r.l, r.a);
-
-            r.machine = 2;
-            r.cycles = 8;
-        }
-
-        // 0x32: LDD HL A : Write to the memory location at HL with the value of A, then decriment HL
-        lddHlA(cpu: CPU) {
-            var r = cpu.registers;
-            cpu._mmu.writeWord((r.h << 8) + r.l, r.a);
-
-            // 16 bit subtraction
-            r.l = (r.l - 1) & 0xFF;
-            if (r.l == 0xFF) {
-                r.h = (r.h - 1) & 0xFF;
-            }
-
-            r.machine = 2;
-            r.cycles = 8;
-        }
-        
-        // 0xAF: XOR A. Effectivly set a to 0
-        xorA(cpu: CPU) {
-            var r = cpu.registers;
-            r.a ^= r.a;
-            r.f = 0x80;
-            r.machine = 1;
-            r.cycles = 4;            
-        }
-        
-        // 0xC2 LD (C),A
-        ldCpA(cpu: CPU) {
-            var r = cpu.registers;
-            cpu._mmu.writeByte(0xFF00 + r.c, r.a);
-            r.machine = 2;
-            r.cycles = 8;
-         }
-
-        // 0xE0 LDH (a8),A
-        ldhNA(cpu: CPU) {
-            var r = cpu.registers;
-            var value = cpu._mmu.readByte(r.pc++);
-            cpu._mmu.writeByte(0xFF00 + r.a, value);
-            r.machine = 3,
-            r.cycles = 12
-        }
-
+        // 0x76 HALT
 
         // 0xCB: Execute a CB-prefix extended op
-        executeCB(cpu: CPU) {
+        EXEC_CB(cpu: CPU) {
              // fetch
-            var opCode = cpu._mmu.readByte(cpu.registers.pc++);
+            var opCode = cpu.mmu.readByte(cpu.PC++);
 
             // decode
             if(cpu._cbMap[opCode] === undefined)
+                alert("cb missing: " + opCode.toString(16));
                 return;
 
             var operation = cpu._cbMap[opCode];
             operation(cpu);
         }
 
-        // 0xCB7H Test bit 7 of H
-        bit7H(cpu: CPU) {
-            var r = cpu.registers;
-            var test = r.h & 0x80;
-            if (test === 0) {
-                r.f |= 0x80; // set Z
-            }
-            else {
-                r.f &= ~0x80; // reset Z
-            }
-            r.f |= 0x20;  // set HC
-            r.f &= ~0x40; // reset N
+        // 0xF3 DI: Disable Interupts
 
-            r.machine = 2;
-            r.cycles = 8;
+        // 0xFB EI: Enable Interupts
+
+
+        // == 8 BIT STORE/LOAD INSTRUCTIONS ==
+
+        // 40 LD B,B
+        LD_B_B(cpu: CPU) {
+            cpu.B = cpu.B;
+            cpu.Count += 1;
         }
 
+        // 41 LD B,C
+        LD_B_C(cpu: CPU) {
+            cpu.B = cpu.C;
+            cpu.Count += 1;
+        }
 
+        // 42 LD B,D
+        LD_B_D(cpu: CPU) {
+            cpu.B = cpu.D;
+            cpu.Count += 1;
+        }
+
+        // 43 LD B,E
+        LD_B_E(cpu: CPU) {
+            cpu.B = cpu.E;
+            cpu.Count += 1;
+        }
+
+        // 44 LD B,H
+        LD_B_H(cpu: CPU) {
+            cpu.B = cpu.H;
+            cpu.Count += 1;
+        }
+
+        // 45 LD B,L
+        LD_B_L(cpu: CPU) {
+            cpu.B = cpu.L;
+            cpu.Count += 1;
+        }
+
+        // 46 LD B,(HL)
+        LD_B_HLm(cpu: CPU) {
+            cpu.B = cpu.mmu.readByte(cpu.HL);
+            cpu.Count += 2;
+        }
+
+        // 47 LD B,A
+        LD_B_A(cpu: CPU) {
+            cpu.B = cpu.A
+            cpu.Count += 1;
+        }
+
+        // 48 LD C,B
+        LD_C_B(cpu: CPU) {
+            cpu.C = cpu.B;
+            cpu.Count += 1;
+        }
+
+        // 49 LD C,C
+        LD_C_C(cpu: CPU) {
+            cpu.C = cpu.C;
+            cpu.Count += 1;
+        }
+
+        // 4A LD C,D
+        LD_C_D(cpu: CPU) {
+            cpu.C = cpu.D;
+            cpu.Count += 1;
+        }
+
+        // 4B LD C,E
+        LD_C_E(cpu: CPU) {
+            cpu.C = cpu.E;
+            cpu.Count += 1;
+        }
+
+        // 4C LD C,H
+        LD_C_H(cpu: CPU) {
+            cpu.C = cpu.H;
+            cpu.Count += 1;
+        }
+
+        // 4D LD C,L
+        LD_C_L(cpu: CPU) {
+            cpu.C = cpu.L;
+            cpu.Count += 1;
+        }
+
+        // 4E LD C,(HL)   2 counts
+        LD_C_HLm(cpu: CPU) {
+            cpu.C = cpu.mmu.readByte(cpu.HL);
+            cpu.Count += 2;
+        }
+
+        // 4F LD C,A
+        LD_C_A(cpu: CPU) {
+            cpu.C = cpu.A;
+            cpu.Count += 1;
+        }
+
+        // 50 LD D,B
+        LD_D_B(cpu: CPU) {
+            cpu.D = cpu.B;
+            cpu.Count += 1; 
+        }
+
+        // 60 LD H,B
+        LD_H_B(cpu: CPU) {
+            cpu.H = cpu.B;
+            cpu.Count += 1;
+        }
+
+        // 70 LD (HL),B
+        LD_HLm_B(cpu: CPU) {
+            cpu.mmu.writeWord(cpu.HL, cpu.B);
+            cpu.Count += 2;
+        }
+
+        // 0x0C INC C
+        INC_C(cpu: CPU) {            
+            cpu.FH = ((cpu.C & 0xf) === 0xf);
+            cpu.C = (cpu.C + 1) & 0xFF;
+            cpu.FZ = (cpu.C === 0);
+            cpu.FN = false;
+
+            cpu.Count += 1;
+        }
+            
+        // 0x0E LD C n
+        LD_C_N(cpu: CPU) {
+            cpu.C = cpu.mmu.readByte(cpu.PC++);
+            cpu.Count += 2;
+        }
+
+        // 0x3E LD A n
+        LD_A_d8(cpu: CPU) {
+            cpu.A = cpu.mmu.readByte(cpu.PC++);
+            cpu.Count += 2;
+        }
+
+        // 0x06 LD B,d8
+        LD_B_d8(cpu: CPU) {
+            cpu.B = cpu.mmu.readByte(cpu.PC++);
+            cpu.Count += 2;
+        }
+
+        // 0x20: JR NZ,r8  Relative jump to immediate value if Zero flag not set
+        JR_NZ_r8(cpu: CPU) {
+            var value = cpu.mmu.readByte(cpu.PC++);
+
+            if (cpu.FZ) {
+                cpu.Count += 2;
+                return;
+            }
+
+            // get the correct negative value
+            if (value > 127) {
+                value = -((~value + 1) & 0xFF);
+            }
+
+            cpu.PC += value;
+            cpu.Count += 3;
+        }
+
+        // Call Address
+        CALL_16a(cpu: CPU) {            
+            cpu.SP -= 2;
+            cpu.mmu.writeWord(cpu.SP, cpu.PC + 2);
+            cpu.PC = cpu.mmu.readWord(cpu.PC);       
+            cpu.Count += 6;
+        }
+
+        // Stack Pushers
+
+        // 0xC5
+        PUSH_BC(cpu: CPU) {
+            cpu.push16(cpu, cpu.B, cpu.C);
+        }
+
+        // 0xD5
+        PUSH_DE(cpu: CPU) {
+            cpu.push16(cpu, cpu.D, cpu.E);
+        }
+
+        // 0xE5
+        PUSH_HL(cpu: CPU) {
+            cpu.push16(cpu, cpu.H, cpu.L);
+        }
+
+        // 0xF5
+        PUSH_AF(cpu: CPU) {
+            cpu.push16(cpu, cpu.A, cpu.F);
+        }
+
+        push16(cpu: CPU, a: number, b: number) {
+            
+            cpu.SP--;
+            cpu.mmu.writeByte(cpu.SP, a);
+            cpu.SP--;
+            cpu.mmu.writeByte(cpu.SP, b);
+
+            cpu.Count += 4;
+        }        
+
+        // Load 16 bit immediate into register
+
+        // 0x01: LD BC,d16  Load a 16 bit immediate into DE
+        LD_BC_d16(cpu: CPU) {
+            
+            cpu.B = cpu.mmu.readByte(cpu.PC++);
+            cpu.C = cpu.mmu.readByte(cpu.PC++);
+            cpu.Count += 3;
+        }
+
+        // 0x11: LD DE,d16  Load a 16 bit immediate into DE
+        LD_DE_d16(cpu: CPU) {
+            
+            cpu.E = cpu.mmu.readByte(cpu.PC++);
+            cpu.D = cpu.mmu.readByte(cpu.PC++);
+            cpu.Count += 3;
+        }
+
+        // 0x21: LD HL,d16  Load a 16 bit immediate into  HL
+        LD_HL_d16(cpu: CPU) {
+            
+            cpu.L = cpu.mmu.readByte(cpu.PC++);
+            cpu.H = cpu.mmu.readByte(cpu.PC++);
+            cpu.Count += 3;
+        }        
+
+        // 0x31: LD HL,d16  Load a 16 bit immediate into  SP
+        LD_SP_d16(cpu: CPU) {
+            
+            cpu.SP = cpu.mmu.readWord(cpu.PC);
+            cpu.PC += 2;
+            cpu.Count += 3;
+        }
+
+        // 0x1A: LD A,(DE)
+        LD_A_DEm(cpu: CPU) {
+            
+            cpu.A = cpu.mmu.readByte((cpu.E << 8) + cpu.D);
+            cpu.Count += 1;
+        }
+
+        // 0x77: LD HL A : Write to the memory location at HL with the value of A
+        LD_HLm_A(cpu: CPU) {
+            
+            cpu.mmu.writeWord((cpu.H << 8) + cpu.L, cpu.A);
+
+            cpu.Count += 2;
+        }
+
+        // 0x32: LDD HL A : Write to the memory location at HL with the value of A, then decriment HL
+        LD_HLmd_A(cpu: CPU){
+            
+            cpu.mmu.writeWord((cpu.H << 8) + cpu.L, cpu.A);
+
+            // 16 bit subtraction
+            cpu.L = (cpu.L - 1) & 0xFF;
+            if (cpu.L == 0xFF) {
+                cpu.H = (cpu.H - 1) & 0xFF;
+            }
+
+            cpu.Count += 2;
+        }
+        
+        // 0xAF: XOR A. Effectivly set a to 0
+        XOR_A(cpu: CPU) {            
+            cpu.A ^= cpu.A;
+            cpu.FZ = true;
+            cpu.Count += 1;           
+        }
+        
+        // 0xC2 LD (C),A
+        LD_Cm_A(cpu: CPU) {            
+            cpu.mmu.writeByte(0xFF00 + cpu.C, cpu.A);
+            cpu.Count += 2;
+         }
+
+        // 0xE0 LDH (a8),A
+        LDH_a8m_A(cpu: CPU) {            
+            var value = cpu.mmu.readByte(cpu.PC++);
+            cpu.mmu.writeByte(0xFF00 + cpu.A, value);
+            cpu.Count += 3;
+        }
+        
+
+        // 0xCB7H Test bit 7 of H
+        BIT_7H(cpu: CPU) {
+            cpu.FZ = ((cpu.H & 0x80) === 0);
+            cpu.FH = true;
+            cpu.FN = false;
+            cpu.Count += 2;
+        }
+
+        // 0xCB11 Rotate Left through carry
+        CB_RL_C(cpu: CPU) {
+            var highBit = cpu.FC ? 1 : 0;
+            cpu.FC = (cpu.C >> 7) === 1;
+            cpu.C = ((cpu.C << 1) & 0xFF) | highBit;
+            cpu.FZ = (cpu.C === 0);
+            cpu.FN = false;
+            cpu.FH = false;
+
+            cpu.Count += 8;
+        }
     }
 
 }
