@@ -90,10 +90,10 @@ module GameboyEmulator {
         private createOpcodeMap() {
             this._opcodeMap = [
                     //x0                //x1                //x2                //x3                //x4                //x5                //x6                //x7                   //x8                 //x9                //xA                //xB                //xC                //xD                //xE                //xF
-            /*0x*/  this.NOP,           this.LD_BC_d16,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.LD_B_d8,       this.notImpl,   /*0x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.INC_C,         this.notImpl,       this.LD_C_N,        this.notImpl,
-            /*1x*/  this.notImpl,       this.LD_DE_d16,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*1x*/ this.notImpl,        this.notImpl,       this.LD_A_DEm,      this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*2x*/  this.JR_NZ_r8,      this.LD_HL_d16,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*2x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*3x*/  this.notImpl,       this.LD_SP_d16,     this.LD_HLmd_A,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*3x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.LD_A_d8,       this.notImpl,
+            /*0x*/  this.NOP,           this.LD_BC_d16,     this.notImpl,       this.INC_B,         this.notImpl,       this.notImpl,       this.LD_B_d8,       this.RLCA,      /*0x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.INC_C,         this.notImpl,       this.LD_C_N,        this.notImpl,
+            /*1x*/  this.notImpl,       this.LD_DE_d16,     this.notImpl,       this.INC_D,         this.notImpl,       this.notImpl,       this.notImpl,       this.RLA,       /*1x*/ this.notImpl,        this.notImpl,       this.LD_A_DEm,      this.notImpl,       this.INC_E,         this.notImpl,       this.notImpl,       this.notImpl,
+            /*2x*/  this.JR_NZ_r8,      this.LD_HL_d16,     this.notImpl,       this.INC_H,         this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*2x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.INC_L,         this.notImpl,       this.notImpl,       this.notImpl,
+            /*3x*/  this.notImpl,       this.LD_SP_d16,     this.LD_HLmd_A,     this.INC_HLm,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*3x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.INC_A,         this.notImpl,       this.LD_A_d8,       this.notImpl,
             /*4x*/  this.LD_B_B,        this.LD_B_C,        this.LD_B_D,        this.LD_B_E,        this.LD_B_H,        this.LD_B_L,        this.LD_B_HLm,      this.LD_B_A,    /*4x*/ this.LD_C_B,         this.LD_C_C,        this.LD_C_D,        this.LD_C_E,        this.LD_C_H,        this.LD_C_L,        this.LD_C_HLm,      this.LD_C_A,
             /*5x*/  this.LD_D_B,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*5x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
             /*6x*/  this.LD_H_B,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*6x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
@@ -102,10 +102,10 @@ module GameboyEmulator {
             /*9x*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*9x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
             /*Ax*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Ax*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.XOR_A,
             /*Bx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Bx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*Cx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_BC,       this.notImpl,       this.notImpl,   /*Cx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.EXEC_CB,       this.notImpl,       this.CALL_16a,      this.notImpl,       this.notImpl,
-            /*Dx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_DE,       this.notImpl,       this.notImpl,   /*Dx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*Ex*/  this.LDH_a8m_A,     this.notImpl,       this.LD_Cm_A,       this.notImpl,       this.notImpl,       this.PUSH_HL,       this.notImpl,       this.notImpl,   /*Ex*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*Fx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_AF,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl    ];
+            /*Cx*/  this.notImpl,       this.POP_BC,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_BC,       this.notImpl,       this.notImpl,   /*Cx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.EXEC_CB,       this.notImpl,       this.CALL_16a,      this.notImpl,       this.notImpl,
+            /*Dx*/  this.notImpl,       this.POP_DE,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_DE,       this.notImpl,       this.notImpl,   /*Dx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Ex*/  this.LDH_a8m_A,     this.POP_HL,        this.LD_Cm_A,       this.notImpl,       this.notImpl,       this.PUSH_HL,       this.notImpl,       this.notImpl,   /*Ex*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Fx*/  this.notImpl,       this.POP_AF,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_AF,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl    ];
 
             this._cbMap = {
                 0x7C: this.BIT_7H,
@@ -162,6 +162,8 @@ module GameboyEmulator {
 
             var operation = cpu._cbMap[opCode];
             operation(cpu);
+
+            cpu.Count += 1;
         }
 
         // 0xF3 DI: Disable Interupts
@@ -285,8 +287,57 @@ module GameboyEmulator {
             cpu.Count += 2;
         }
 
+        // Increment Functions 8-bit
+
+        // 0x04 INC B
+        INC_B(cpu: CPU) {
+            cpu.FH = ((cpu.B & 0xf) === 0xf);
+            cpu.B = (cpu.B + 1) & 0xFF;
+            cpu.FZ = (cpu.B === 0);
+            cpu.FN = false;
+
+            cpu.Count += 1;
+        }
+
+
+        // 0x14 INC D
+        INC_D(cpu: CPU) {
+            cpu.FH = ((cpu.D & 0xf) === 0xf);
+            cpu.D = (cpu.D + 1) & 0xFF;
+            cpu.FZ = (cpu.D === 0);
+            cpu.FN = false;
+
+            cpu.Count += 1;
+        }
+
+        // 0x24 INC H
+        INC_H(cpu: CPU) {
+            cpu.FH = ((cpu.H & 0xf) === 0xf);
+            cpu.H = (cpu.H + 1) & 0xFF;
+            cpu.FZ = (cpu.H === 0);
+            cpu.FN = false;
+
+            cpu.Count += 1;
+        }
+
+        // 0x34 INC (HL)
+        INC_HLm(cpu: CPU) {
+
+            var val = cpu.mmu.readByte(cpu.HL);
+
+            cpu.FH = ((val & 0xf) === 0xf);
+            val = (val + 1) & 0xFF;
+            cpu.FZ = (val === 0);
+            cpu.FN = false;
+
+            cpu.mmu.writeByte(cpu.HL, val);
+
+            cpu.Count += 3;
+        }
+
+
         // 0x0C INC C
-        INC_C(cpu: CPU) {            
+        INC_C(cpu: CPU) {
             cpu.FH = ((cpu.C & 0xf) === 0xf);
             cpu.C = (cpu.C + 1) & 0xFF;
             cpu.FZ = (cpu.C === 0);
@@ -294,6 +345,42 @@ module GameboyEmulator {
 
             cpu.Count += 1;
         }
+
+        // 0x1C INC E
+        INC_E(cpu: CPU) {
+            cpu.FH = ((cpu.E & 0xf) === 0xf);
+            cpu.E = (cpu.E + 1) & 0xFF;
+            cpu.FZ = (cpu.E === 0);
+            cpu.FN = false;
+
+            cpu.Count += 1;
+        }
+
+        // 0x2C INC L
+        INC_L(cpu: CPU) {
+            cpu.FH = ((cpu.L & 0xf) === 0xf);
+            cpu.L = (cpu.L + 1) & 0xFF;
+            cpu.FZ = (cpu.L === 0);
+            cpu.FN = false;
+
+            cpu.Count += 1;
+        }
+
+        // 0xeC INC A
+        INC_A(cpu: CPU) {
+            cpu.FH = ((cpu.A & 0xf) === 0xf);
+            cpu.A = (cpu.A + 1) & 0xFF;
+            cpu.FZ = (cpu.A === 0);
+            cpu.FN = false;
+
+            cpu.Count += 1;
+        }
+
+
+        // Decrement Functions 8-bit
+
+
+        
             
         // 0x0E LD C n
         LD_C_N(cpu: CPU) {
@@ -369,7 +456,39 @@ module GameboyEmulator {
             cpu.mmu.writeByte(cpu.SP, b);
 
             cpu.Count += 4;
-        }        
+        }
+
+        // Stack Poppers
+
+        // 0xC1 POP BC
+        POP_BC(cpu: CPU) {
+            cpu.pop16(cpu, cpu.B, cpu.C);
+        }
+
+        // 0xD1 POP BC
+        POP_DE(cpu: CPU) {
+            cpu.pop16(cpu, cpu.D, cpu.E);
+        }
+
+        // 0xE1 POP HL
+        POP_HL(cpu: CPU) {
+            cpu.pop16(cpu, cpu.H, cpu.L);
+        }
+
+        // 0xF1 POP AF
+        POP_AF(cpu: CPU) {
+            cpu.pop16(cpu, cpu.A, cpu.F);
+        }
+
+        pop16(cpu: CPU, a: number, b: number) {            
+            b = cpu.mmu.readByte(cpu.SP);
+            cpu.SP++;
+            a = cpu.mmu.readByte(cpu.SP);
+            cpu.SP++;
+
+            cpu.Count += 3;
+        }
+
 
         // Load 16 bit immediate into register
 
@@ -412,7 +531,7 @@ module GameboyEmulator {
             cpu.Count += 1;
         }
 
-        // 0x77: LD HL A : Write to the memory location at HL with the value of A
+        // 0x77: LD (HL),A : Write to the memory location at HL with the value of A
         LD_HLm_A(cpu: CPU) {
             
             cpu.mmu.writeWord((cpu.H << 8) + cpu.L, cpu.A);
@@ -463,16 +582,42 @@ module GameboyEmulator {
             cpu.Count += 2;
         }
 
-        // 0xCB11 Rotate Left through carry
-        CB_RL_C(cpu: CPU) {
+        // == Rotate and Shift Group ==
+
+        //0x07 RLCA Rotate Left
+        RLCA(cpu: CPU) {
+            var highBit = ((cpu.A & 0x80) === 0x80) ? 1 : 0;
+            cpu.FC = (highBit === 1);
+            cpu.A = ((cpu.A << 1) | highBit) & 0xFF;
+            cpu.FZ = false;
+            cpu.FN = false;
+            cpu.FH = false;
+
+            cpu.Count += 1;
+        }
+
+        //0x17 RLA  Rotate Left through carry
+        RLA(cpu: CPU) {
             var highBit = cpu.FC ? 1 : 0;
-            cpu.FC = (cpu.C >> 7) === 1;
-            cpu.C = ((cpu.C << 1) & 0xFF) | highBit;
+            cpu.FC = (cpu.A & 0x80) === 0x80;
+            cpu.A = ((cpu.C << 1) | highBit) & 0xFF;
+            cpu.FZ = false;
+            cpu.FN = false;
+            cpu.FH = false;
+
+            cpu.Count += 1;
+        }
+        
+        // 0xCB11 RL C  Rotate Left through carry
+        CB_RL_C(cpu: CPU) {
+            var highBit = cpu.FC ? 1 : 0;               // save the value out of FC
+            cpu.FC = (cpu.C & 0x80) === 0x80;           // test to see if C is going to flow into Carry
+            cpu.C = ((cpu.C << 1) | highBit) & 0xFF;    // shift left and shove the old value of FC into the low bit. mask to 8 bits.
             cpu.FZ = (cpu.C === 0);
             cpu.FN = false;
             cpu.FH = false;
 
-            cpu.Count += 8;
+            cpu.Count += 2;
         }
     }
 
