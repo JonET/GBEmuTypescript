@@ -161,8 +161,8 @@
         }
 
         writeWord(address: number, value: number) {
-            this.writeByte(address, value & 0xFF) + (address + 1, value >> 8);
-            console.log("writeWord addr:" + zeroPad(address.toString(16), 4) + " value:" + zeroPad(value.toString(16), 4));
+            this.writeByte(address, value & 0xFF) + this.writeByte(address + 1, value >> 8);
+            //console.log("writeWord addr:" + zeroPad(address.toString(16), 4) + " value:" + zeroPad(value.toString(16), 4));
         }
     }
 }
