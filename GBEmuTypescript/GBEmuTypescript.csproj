@@ -42,6 +42,7 @@
       <DependentUpon>MMU.ts</DependentUpon>
     </Content>
     <Content Include="Scripts\GameboyEmulator\MMU.ts" />
+    <Content Include="Scripts\jquery-1.7.2.min.js" />
     <Content Include="Scripts\jquery.d.ts" />
     <Content Include="web.config" />
     <Content Include="Scripts\app.js.map">

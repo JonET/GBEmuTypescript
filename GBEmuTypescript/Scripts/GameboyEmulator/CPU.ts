@@ -26,11 +26,13 @@ module GameboyEmulator {
         public FH: bool = false;    // 0x20 half-carry
         public FC: bool = false;    // 0x10 carry
 
+        public IsRunning: bool = false;
+
         public get F(): number {
             return (Number(this.FZ) << 7) |
                    (Number(this.FN) << 6) |
-                   (Number(this.FH) << 6) |
-                   (Number(this.FC) << 5);
+                   (Number(this.FH) << 5) |
+                   (Number(this.FC) << 4);
         }
 
         public set F(value: number) {
@@ -45,8 +47,8 @@ module GameboyEmulator {
         }
         
         public set AF(value: number) {
-            this.A = value & 0xF0 >> 8;
-            this.F = value & 0XF;
+            this.A = (value & 0xFF00) >> 8;
+            this.F = value & 0XFF;
         }        
 
         public get HL(): number {
@@ -54,8 +56,8 @@ module GameboyEmulator {
         }
 
         public set HL(value: number) {
-            this.H = value & 0xF0 >> 8;
-            this.L = value & 0XF;
+            this.H = (value & 0xFF00) >> 8;
+            this.L = value & 0XFF;
         }
 
         public get BC(): number {
@@ -63,8 +65,8 @@ module GameboyEmulator {
         }
         
         public set BC(value: number) {
-            this.B = value & 0xF0 >> 8;
-            this.C = value & 0XF;
+            this.B = (value & 0xFF00) >> 8;
+            this.C = value & 0XFF;
         }
 
         public get DE(): number {
@@ -72,8 +74,8 @@ module GameboyEmulator {
         }
 
         public set DE(value: number) {
-            this.D = value & 0xF0 >> 8;
-            this.E = value & 0XF;
+            this.D = (value & 0xFF00) >> 8;
+            this.E = value & 0XFF;
         }
 
         // pretty prints registers together as hex as a debugging aid
@@ -125,7 +127,7 @@ module GameboyEmulator {
             /*Cx*/  this.notImpl,       this.POP_BC,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_BC,       this.notImpl,       this.notImpl,   /*Cx*/ this.notImpl,        this.RET,           this.notImpl,       this.EXEC_CB,       this.notImpl,       this.CALL_16a,      this.notImpl,       this.notImpl,
             /*Dx*/  this.notImpl,       this.POP_DE,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_DE,       this.notImpl,       this.notImpl,   /*Dx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
             /*Ex*/  this.LDH_a8m_A,     this.POP_HL,        this.LD_Cm_A,       this.notImpl,       this.notImpl,       this.PUSH_HL,       this.notImpl,       this.notImpl,   /*Ex*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*Fx*/  this.notImpl,       this.POP_AF,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_AF,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl    ];
+            /*Fx*/  this.notImpl,       this.POP_AF,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_AF,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.CP_d8,         this.notImpl    ];
 
             this._cbMap = {
                 0x7C: this.BIT_7H,
@@ -134,25 +136,39 @@ module GameboyEmulator {
         }
 
         run() {
+            this.IsRunning = true;
 
-            while (true) {
-                // fetch
-                var opCode = this.mmu.readByte(this.PC);
-                this.PC += 1;
+            //var pcLog: string[] = [];
 
-                // decode
-                if (this._opcodeMap[opCode] === undefined || this._opcodeMap[opCode] === this.notImpl) {
-                    alert("Missing Opcode: " + zeroPad(opCode.toString(16), 2));
-                    return;
-                }
+            
 
-                var operation = this._opcodeMap[opCode];
+            var mainloop = () => {
 
-                //this.counters.machine += this.count;
+                for (var i = 0; i < 10000; ++i) {
 
-                // execute
-                operation(this);
+                    if (!this.IsRunning) {
+                        clearInterval(cancelToken);
+                        return;
+                    }
+
+                    // fetch
+                    var opCode = this.mmu.readByte(this.PC);
+                    //pcLog.push(zeroPad(this.PC.toString(16),2));
+
+                    this.PC += 1;
+
+                    // decode
+                    if (this._opcodeMap[opCode] === undefined || this._opcodeMap[opCode] === this.notImpl) {
+                        alert("Missing Opcode: " + zeroPad(opCode.toString(16), 2));
+                        this.IsRunning = false;
+                    }
+
+                    var operation = this._opcodeMap[opCode];
+                    operation(this);
+                };
             }
+
+            var cancelToken = setInterval(mainloop, 4);
         }
 
         // == MISC/CONTROL INSTRUCTIONS ==
@@ -176,9 +192,10 @@ module GameboyEmulator {
             var opCode = cpu.mmu.readByte(cpu.PC++);
 
             // decode
-            if(cpu._cbMap[opCode] === undefined)
+            if (cpu._cbMap[opCode] === undefined) {
                 alert("cb missing: " + opCode.toString(16));
                 return;
+            }
 
             var operation = cpu._cbMap[opCode];
             operation(cpu);
@@ -1105,26 +1122,25 @@ module GameboyEmulator {
 
         // 0x1A: LD A,(DE)
         LD_A_DEm(cpu: CPU) {            
-            cpu.A = cpu.mmu.readByte((cpu.E << 8) + cpu.D);
+            cpu.A = cpu.mmu.readByte(cpu.DE);
             cpu.Count += 1;
         }
 
         // 0x02 LD (BC),A
         LD_BCm_A(cpu: CPU){
-            cpu.mmu.writeWord(cpu.BC, cpu.A);
+            cpu.mmu.writeByte(cpu.BC, cpu.A);
             cpu.Count += 2;
         }
 
         // 0x12 LD (DE),A
         LD_DEm_A(cpu: CPU){
-            cpu.mmu.writeWord(cpu.DE, cpu.A);
+            cpu.mmu.writeByte(cpu.DE, cpu.A);
             cpu.Count += 2;
         }
 
         // 0x33: LDD HL A : Write to the memory location at HL with the value of A, then increment HL
-        LD_HLmi_A(cpu: CPU){
-            
-            cpu.mmu.writeWord(cpu.HL, cpu.A);
+        LD_HLmi_A(cpu: CPU){            
+            cpu.mmu.writeByte(cpu.HL, cpu.A);
             cpu.HL += 1;
             cpu.Count += 2;
         }
@@ -1132,7 +1148,7 @@ module GameboyEmulator {
         // 0x32: LDD HL A : Write to the memory location at HL with the value of A, then decriment HL
         LD_HLmd_A(cpu: CPU){
             
-            cpu.mmu.writeWord(cpu.HL, cpu.A);
+            cpu.mmu.writeByte(cpu.HL, cpu.A);
             cpu.HL -= 1;
             cpu.Count += 2;
         }
@@ -1160,9 +1176,9 @@ module GameboyEmulator {
 
         // 0xCB7H Test bit 7 of H
         BIT_7H(cpu: CPU) {
-            cpu.FZ = ((cpu.H & 0x80) === 0);
-            cpu.FH = true;
+            cpu.FZ = (cpu.H & 0x80) === 0;
             cpu.FN = false;
+            cpu.FH = true;
             cpu.Count += 2;
         }
 
@@ -1226,6 +1242,21 @@ module GameboyEmulator {
             cpu.FH = false;
 
             cpu.Count += 2;
+        }
+
+        // 0xFE CP,d8
+        CP_d8(cpu: CPU) {
+            cpu.Compare(cpu, cpu.mmu.readByte(cpu.PC));
+            cpu.PC += 1;
+            cpu.Count += 2;
+        }
+
+        // TODO: I'm not sure this is correct. We shall see!
+        Compare(cpu: CPU, value: number) {
+            cpu.FH = (cpu.A & 0x0F) < (value & 0x0F);
+            cpu.FC = value > cpu.A;
+            cpu.FN = true;
+            cpu.FZ = cpu.A === value;
         }
     }
 

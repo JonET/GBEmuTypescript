@@ -29,7 +29,8 @@
         public rom: number[] = [];           // 4000-7FFF
         public videoRam: number[] = [];      // 8000-9FFF (will be moved to GPU eventually)
         public extRam: number[] = [];        // A000-BFFF
-        public workingRam: number[] = [];    // C000-DFFF (with read-only shadow at E000-FDFF)        
+        public workingRam: number[] = [];    // C000-DFFF (with read-only shadow at E000-FDFF)
+        public ioRegisters: number[] = [];         // FF00-FF7F memory mapped IO
         public zRam: number[] = [];          // FF80-FFFF
 
         constructor () {
@@ -58,6 +59,9 @@
 
             // Is in ROM0 or ROM1
             if (address <= 0x7FFF) {
+                if (address >= 0x104 && address <= 0x0133) {
+                    return this.bios[0x00A8 + (address - 0x104)]; // HACK! Redirecting this into the bios where the original Nintendo Logo lives.
+                }
                 return 0;   // Rom not implemented yet.
             }
 
@@ -93,7 +97,7 @@
 
             // Hardware IO Registers
             if (address <= 0xFF7F) {
-                return 0; // IO Not yet implemented
+                return this.ioRegisters[address - 0xFF00]; // IO Not yet implemented
             }
 
             // "Zero page" RAM
@@ -104,7 +108,7 @@
         }
 
         readWord(address: number) {
-            return this.readByte(address) + (this.readByte(address + 1) << 8);
+            return (this.readByte(address + 1) << 8) | this.readByte(address);
         }
 
         writeByte(address: number, value: number) {
@@ -150,7 +154,8 @@
 
             // Hardware IO Registers
             if (address <= 0xFF7F) {
-                return 0;
+                this.ioRegisters[address - 0xFF00] = value; // IO Not yet implemented
+                return;
             }
 
             // "Zero page" RAM
@@ -161,8 +166,8 @@
         }
 
         writeWord(address: number, value: number) {
-            this.writeByte(address, value & 0xFF) + this.writeByte(address + 1, value >> 8);
-            //console.log("writeWord addr:" + zeroPad(address.toString(16), 4) + " value:" + zeroPad(value.toString(16), 4));
+            this.writeByte(address, value & 0xFF);
+            this.writeByte(address + 1, value >> 8);
         }
     }
 }
