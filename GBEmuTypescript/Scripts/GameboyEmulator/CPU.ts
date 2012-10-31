@@ -120,14 +120,14 @@ module GameboyEmulator {
             /*5x*/  this.LD_D_B,        this.LD_D_C,        this.LD_D_D,        this.LD_D_E,        this.LD_D_H,        this.LD_D_L,        this.LD_D_HLm,      this.LD_D_A,    /*5x*/ this.LD_E_B,         this.LD_E_C,        this.LD_E_D,        this.LD_E_E,        this.LD_E_H,        this.LD_E_L,        this.LD_E_HLm,      this.LD_E_A,
             /*6x*/  this.LD_H_B,        this.LD_H_C,        this.LD_H_D,        this.LD_H_E,        this.LD_H_H,        this.LD_H_L,        this.LD_H_HLm,      this.LD_H_A,    /*6x*/ this.LD_L_B,         this.LD_L_C,        this.LD_L_D,        this.LD_L_E,        this.LD_L_H,        this.LD_L_L,        this.LD_L_HLm,      this.LD_L_A,
             /*7x*/  this.LD_HLm_B,      this.LD_HLm_C,      this.LD_HLm_D,      this.LD_HLm_E,      this.LD_HLm_H,      this.LD_HLm_L,      this.notImpl,       this.LD_HLm_A,  /*7x*/ this.LD_A_B,         this.LD_A_C,        this.LD_A_D,        this.LD_A_E,        this.LD_A_H,        this.LD_A_L,        this.LD_A_HLm,      this.LD_A_A,
-            /*8x*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*8x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*9x*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*9x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*8x*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.ADD_A_HLm,     this.notImpl,   /*8x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*9x*/  this.SUB_B,         this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*9x*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
             /*Ax*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Ax*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.XOR_A,
-            /*Bx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Bx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Bx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Bx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.CP_HLm,       this.notImpl,
             /*Cx*/  this.notImpl,       this.POP_BC,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_BC,       this.notImpl,       this.notImpl,   /*Cx*/ this.notImpl,        this.RET,           this.notImpl,       this.EXEC_CB,       this.notImpl,       this.CALL_16a,      this.notImpl,       this.notImpl,
             /*Dx*/  this.notImpl,       this.POP_DE,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_DE,       this.notImpl,       this.notImpl,   /*Dx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*Ex*/  this.LDH_a8m_A,     this.POP_HL,        this.LD_Cm_A,       this.notImpl,       this.notImpl,       this.PUSH_HL,       this.notImpl,       this.notImpl,   /*Ex*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
-            /*Fx*/  this.notImpl,       this.POP_AF,        this.notImpl,       this.notImpl,       this.notImpl,       this.PUSH_AF,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.CP_d8,         this.notImpl    ];
+            /*Ex*/  this.LDH_a8m_A,     this.POP_HL,        this.LD_Cm_A,       this.notImpl,       this.notImpl,       this.PUSH_HL,       this.notImpl,       this.notImpl,   /*Ex*/ this.notImpl,        this.notImpl,       this.LD_a16m_A,     this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
+            /*Fx*/  this.LDH_A_a8m,     this.POP_AF,        this.LD_A_Cm,       this.notImpl,       this.notImpl,       this.PUSH_AF,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.LD_A_a16m,     this.notImpl,       this.notImpl,       this.notImpl,       this.CP_d8,         this.notImpl    ];
 
             this._cbMap = {
                 0x7C: this.BIT_7H,
@@ -135,40 +135,24 @@ module GameboyEmulator {
             };
         }
 
-        run() {
-            this.IsRunning = true;
+        step() {
+            // fetch
+            var opCode = this.mmu.readByte(this.PC);
+            this.PC += 1;
 
-            //var pcLog: string[] = [];
-
-            
-
-            var mainloop = () => {
-
-                for (var i = 0; i < 10000; ++i) {
-
-                    if (!this.IsRunning) {
-                        clearInterval(cancelToken);
-                        return;
-                    }
-
-                    // fetch
-                    var opCode = this.mmu.readByte(this.PC);
-                    //pcLog.push(zeroPad(this.PC.toString(16),2));
-
-                    this.PC += 1;
-
-                    // decode
-                    if (this._opcodeMap[opCode] === undefined || this._opcodeMap[opCode] === this.notImpl) {
-                        alert("Missing Opcode: " + zeroPad(opCode.toString(16), 2));
-                        this.IsRunning = false;
-                    }
-
-                    var operation = this._opcodeMap[opCode];
-                    operation(this);
-                };
+            // decode
+            if (this._opcodeMap[opCode] === undefined || this._opcodeMap[opCode] === this.notImpl) {
+                alert("Missing Opcode: " + zeroPad(opCode.toString(16), 2));
+                this.IsRunning = false;
             }
 
-            var cancelToken = setInterval(mainloop, 4);
+            var operation = this._opcodeMap[opCode];
+            operation(this);
+
+            if(this.PC === 0xFA) {
+                this.IsRunning = false;
+                alert("Boot ROM finished");
+            }
         }
 
         // == MISC/CONTROL INSTRUCTIONS ==
@@ -585,6 +569,49 @@ module GameboyEmulator {
             cpu.A = cpu.A;
             cpu.Count += 1;
         }
+
+        // E0 LDH (a8),A or LD ($FF00+a8),A
+        LDH_a8m_A(cpu: CPU) {            
+            var immediate = cpu.mmu.readByte(cpu.PC++);
+            cpu.mmu.writeByte(0xFF00 + immediate, cpu.A);
+            cpu.Count += 3;
+        }
+
+        // F0 LDH A,(a8)  or LD A,($FF00+a8)
+        LDH_A_a8m(cpu: CPU) {            
+            var immediate = cpu.mmu.readByte(cpu.PC++);
+            cpu.A = cpu.mmu.readByte(0xFF00 + immediate);
+            cpu.Count += 3;
+        }
+
+        // EA LD (a16),A
+        LD_a16m_A(cpu: CPU) {
+            var immediate = cpu.mmu.readWord(cpu.PC);
+            cpu.PC += 2;
+            cpu.mmu.writeByte(immediate, cpu.A);
+            cpu.Count += 4;
+        }
+
+        // FA LD A,(a16)
+        LD_A_a16m(cpu: CPU) {
+            var immediate = cpu.mmu.readWord(cpu.PC);
+            cpu.PC += 2;
+            cpu.A = cpu.mmu.readByte(immediate);
+            cpu.Count += 4;
+        }
+
+        //E2 LD (C),A or LD ($FF00+C),A
+        LD_Cm_A(cpu: CPU) {
+            cpu.mmu.writeByte(0xFF00 + cpu.C, cpu.A);
+            cpu.Count += 2;
+        }
+
+        //F2 LD A,(C) or LD A,($FF00+C)
+        LD_A_Cm(cpu: CPU) {
+            cpu.A = cpu.mmu.readByte(0xFF00 + cpu.C);
+            cpu.Count += 2;
+        }
+
 
         // Increment Functions 8-bit
 
@@ -1159,20 +1186,6 @@ module GameboyEmulator {
             cpu.FZ = true;
             cpu.Count += 1;           
         }
-        
-        // 0xC2 LD (C),A
-        LD_Cm_A(cpu: CPU) {            
-            cpu.mmu.writeByte(0xFF00 + cpu.C, cpu.A);
-            cpu.Count += 2;
-         }
-
-        // 0xE0 LDH (a8),A
-        LDH_a8m_A(cpu: CPU) {            
-            var value = cpu.mmu.readByte(cpu.PC++);
-            cpu.mmu.writeByte(0xFF00 + cpu.A, value);
-            cpu.Count += 3;
-        }
-        
 
         // 0xCB7H Test bit 7 of H
         BIT_7H(cpu: CPU) {
@@ -1244,12 +1257,45 @@ module GameboyEmulator {
             cpu.Count += 2;
         }
 
+        // 0xBE CP,(HL)
+        CP_HLm(cpu: CPU) {
+            cpu.Compare(cpu, cpu.mmu.readByte(cpu.HL));
+            cpu.Count += 2;
+        }
+
         // 0xFE CP,d8
         CP_d8(cpu: CPU) {
             cpu.Compare(cpu, cpu.mmu.readByte(cpu.PC));
             cpu.PC += 1;
             cpu.Count += 2;
         }
+
+        // 8bit arithmetic/logical instructions
+        // 90 SUB B
+        SUB_B(cpu: CPU) {
+            cpu.FH = (cpu.A & 0x0F) < (cpu.B & 0x0F);
+            cpu.FC = cpu.A < cpu.B;
+            cpu.A = (cpu.A - cpu.B) & 0xFF;
+            cpu.FN = true;
+            cpu.FZ = (cpu.A === 0);
+
+            cpu.Count += 2;            
+        }
+
+        // 86 ADD A,(HL)
+        ADD_A_HLm(cpu: CPU) {
+            var value = cpu.mmu.readByte(cpu.HL);
+            var sum = cpu.A + value;
+            cpu.A = sum & 0xFF;
+
+            cpu.FZ = (cpu.A === 0);
+            cpu.FN = false;
+            cpu.FH = ((cpu.A & 0xF) + (value & 0xF)) > 0xF;
+            cpu.FC = sum > 0xff;
+
+            cpu.Count += 2;
+        }
+
 
         // TODO: I'm not sure this is correct. We shall see!
         Compare(cpu: CPU, value: number) {

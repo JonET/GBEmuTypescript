@@ -30,11 +30,13 @@
         public videoRam: number[] = [];      // 8000-9FFF (will be moved to GPU eventually)
         public extRam: number[] = [];        // A000-BFFF
         public workingRam: number[] = [];    // C000-DFFF (with read-only shadow at E000-FDFF)
-        public ioRegisters: number[] = [];         // FF00-FF7F memory mapped IO
+        public ioRegisters: number[] = [];   // FF00-FF7F memory mapped IO
         public zRam: number[] = [];          // FF80-FFFF
+        public ioMap: IOMap;
 
         constructor () {
             this.reset();
+            this.ioMap = new IOMap(this);
         }
 
         reset() {
@@ -48,6 +50,7 @@
 
             for (var i = 0; i < 0x7F; ++i) {
                 this.zRam[i] = 0;
+                this.ioRegisters[i] = 0;
             }
         }
 
@@ -62,6 +65,7 @@
                 if (address >= 0x104 && address <= 0x0133) {
                     return this.bios[0x00A8 + (address - 0x104)]; // HACK! Redirecting this into the bios where the original Nintendo Logo lives.
                 }
+
                 return 0;   // Rom not implemented yet.
             }
 
@@ -154,7 +158,7 @@
 
             // Hardware IO Registers
             if (address <= 0xFF7F) {
-                this.ioRegisters[address - 0xFF00] = value; // IO Not yet implemented
+                this.ioRegisters[address - 0xFF00] = value;
                 return;
             }
 
@@ -170,4 +174,163 @@
             this.writeByte(address + 1, value >> 8);
         }
     }
+
+    class IOMap {
+        private mmu: MMU;
+
+        constructor (mmu: MMU) {
+            this.mmu = mmu;
+        }
+
+        // LCDC
+        public get LcdControl(): number {
+            return this.mmu.readByte(0xFF40);
+        }
+
+        public get LcdDisplayEnable(): bool {
+            return (this.LcdControl & 0x80) == 0x80;
+        }
+
+        public get WindowTileMapDisplaySelect(): bool {
+            return (this.LcdControl & 0x40) == 0x40;
+        }
+
+        public get WindowTileMapDisplayEnable(): bool {
+            return (this.LcdControl & 0x20) == 0x20;
+        }
+
+        public get BgAndWindowTileDataSelect(): bool {
+            return (this.LcdControl & 0x10) == 0x10;
+        }
+
+        public get BgTileMapDisplaySelect(): bool {
+            return (this.LcdControl & 0x8) == 0x8;
+        }
+
+        public get SpriteSize(): bool {
+            return (this.LcdControl & 0x4) == 0x4;
+        }
+
+        public get SpriteDisplayEnable(): bool {
+            return (this.LcdControl & 0x2) == 0x2;
+        }
+
+        public get BgDisplay(): bool {
+            return (this.LcdControl & 0x1) == 0x1;
+        }
+
+        // STAT
+        public get LcdStatus(): number {
+            return this.mmu.readByte(0xFF41);
+        }
+
+        public set LcdStatus(value: number) {
+            this.mmu.writeByte(0xFF41, value);
+        }
+
+        public get YCoordinateCompareInterruptEnable(): bool {
+            return (this.LcdStatus & 0x80) == 0x80;
+        }
+
+        public get OamInterruptEnable(): bool {
+            return (this.LcdStatus & 0x40) == 0x40;
+        }
+
+        public get VBlankInterruptEnable(): bool {
+            return (this.LcdStatus & 0x20) == 0x20;
+        }
+
+        public get HBlankInterruptEnable(): bool {
+            return (this.LcdStatus & 0x10) == 0x10;
+        }
+
+        public get CoincidenceFlag(): bool {
+            return (this.LcdStatus & 0x4) == 0x4;
+        }
+
+        public set CoincidenceFlag(value: bool) {
+            if(value)
+                this.LcdStatus |= 0x4;
+            else
+                this.LcdStatus &= ~0x4;
+        }
+
+        public get LcdMode(): number {
+            return (this.LcdStatus & 0x3);
+        }
+
+        public set LcdMode(value: number) {
+            // There is probably a not-so-horrible way to do this, but I'm tired.
+
+            if ((value & 1) === 1) {
+                this.LcdStatus |= 1;
+            }
+            else {
+                this.LcdStatus &= ~1;
+            }
+
+            if ((value & 2) === 2) {
+                this.LcdStatus |= 2;
+            }
+            else {
+                this.LcdStatus &= ~2;
+            }
+        }
+
+        // SCY
+        public get ScrollY(): number {
+            return this.mmu.readByte(0xFF42);
+        }
+
+        // SCX
+        public get ScrollX(): number {
+            return this.mmu.readByte(0xFF43);
+        }
+
+        // LY
+        public get YCoordinate(): number {
+            return this.mmu.readByte(0xFF44);
+        }
+
+        public set YCoordinate(value: number) {
+            return this.mmu.writeByte(0xFF44, value);
+        }
+
+        // LYC
+        public get YCoordinateCompare(): number {
+            return this.mmu.readByte(0xFF45);
+        }
+
+        // DMA (DMA Transfer and Start Address)
+        public get DMA(): number {
+            return this.mmu.readByte(0xFF46);
+        }
+
+        // BGP
+        public get BackgroundPalleteData(): number {
+            return this.mmu.readByte(0xFF47);
+        }
+
+        // OBP0
+        public get ObjectPallete0Data(): number {
+            return this.mmu.readByte(0xFF48);
+        }
+
+        // OBP1
+        public get ObjectPallete1Data(): number {
+            return this.mmu.readByte(0xFF49);
+        }
+
+        // WY
+        public get WindowYPosition(): number {
+            return this.mmu.readByte(0xFF4A);
+        }
+
+        // WX
+        public get WindowXPosition(): number {
+            return this.mmu.readByte(0xFF4B);
+        }       
+    }
+
+
 }

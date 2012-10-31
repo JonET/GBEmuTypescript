@@ -21,6 +21,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app.css" />
+    <Content Include="Scripts\GameboyEmulator\Copy of CPU.js">
+      <DependentUpon>GPU.ts</DependentUpon>
+    </Content>
+    <Content Include="Scripts\GameboyEmulator\GPU.js">
+      <DependentUpon>GPU.ts</DependentUpon>
+    </Content>
+    <Content Include="Scripts\GameboyEmulator\GPU.ts" />
     <Content Include="Scripts\GameboyEmulator\CPU.ts" />
     <Content Include="Scripts\GameboyEmulator\CPU.js">
       <DependentUpon>CPU.ts</DependentUpon>
@@ -56,6 +63,12 @@
     </Content>
     <Content Include="Scripts\GameboyEmulator\GameboyEmulator.js.map">
       <DependentUpon>GameboyEmulator.ts</DependentUpon>
+    </Content>
+    <Content Include="Scripts\GameboyEmulator\Copy of CPU.js.map">
+      <DependentUpon>GPU.ts</DependentUpon>
+    </Content>
+    <Content Include="Scripts\GameboyEmulator\GPU.js.map">
+      <DependentUpon>GPU.ts</DependentUpon>
     </Content>
     <None Include="web.Release.config">
       <DependentUpon>web.config</DependentUpon>
