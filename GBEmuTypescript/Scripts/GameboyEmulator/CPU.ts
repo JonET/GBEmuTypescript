@@ -151,7 +151,7 @@ module GameboyEmulator {
 
             if(this.PC === 0xFA) {
                 this.IsRunning = false;
-                alert("Boot ROM finished");
+                //alert("Boot ROM finished");
             }
         }
 
@@ -191,9 +191,9 @@ module GameboyEmulator {
 
         // 0xFB EI: Enable Interupts
 
+        
 
         // == 8 BIT STORE/LOAD INSTRUCTIONS ==
-
         // 40 LD B,B
         LD_B_B(cpu: CPU) {
             cpu.B = cpu.B;
@@ -911,7 +911,7 @@ module GameboyEmulator {
 
         // 0x1E LD L d8
         LD_L_d8(cpu: CPU) {
-            cpu.E = cpu.mmu.readByte(cpu.PC++);
+            cpu.L = cpu.mmu.readByte(cpu.PC++);
             cpu.Count += 2;
         }
 
@@ -1165,16 +1165,15 @@ module GameboyEmulator {
             cpu.Count += 2;
         }
 
-        // 0x33: LDD HL A : Write to the memory location at HL with the value of A, then increment HL
+        // 0x33: LDD (HL+), A : Write to the memory location at HL with the value of A, then increment HL
         LD_HLmi_A(cpu: CPU){            
             cpu.mmu.writeByte(cpu.HL, cpu.A);
             cpu.HL += 1;
             cpu.Count += 2;
         }
 
-        // 0x32: LDD HL A : Write to the memory location at HL with the value of A, then decriment HL
-        LD_HLmd_A(cpu: CPU){
-            
+        // 0x32: LDD (HL-), A : Write to the memory location at HL with the value of A, then decriment HL
+        LD_HLmd_A(cpu: CPU){            
             cpu.mmu.writeByte(cpu.HL, cpu.A);
             cpu.HL -= 1;
             cpu.Count += 2;
