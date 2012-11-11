@@ -5,30 +5,34 @@
 module GameboyEmulator {
     export class Emulator {
         
-        private _mmu: MMU;
-        private _cpu: CPU;
-        private _gpu: GPU;
+        private mmu: MMU;
+        private cpu: CPU;
+        private gpu: GPU;
 
         constructor () {
-            this._mmu = new MMU();
-            this._cpu = new CPU(this._mmu);
-            this._gpu = new GPU(this._mmu);
+            this.mmu = new MMU();
+            this.cpu = new CPU(this.mmu);
+            this.gpu = new GPU(this.mmu);            
         }
 
         start() {
+            var cancelToken: number;
+
             var mainLoop = () => {
                 for (var i = 0; i < 10000; ++i) {
-                    if (this._cpu.IsRunning === false) {
+                    if (this.cpu.IsRunning === false) {
                         clearInterval(cancelToken);
                         return;
                     }
-                    this._cpu.step();
-                    this._gpu.step(this._cpu.Count);
+                    this.cpu.step();
+                    this.gpu.step(this.cpu.Count);
                 }
             }
 
-            this._cpu.IsRunning = true;
-            var cancelToken = setInterval(mainLoop, 4);
+            this.mmu.reset(() => {
+                this.cpu.IsRunning = true;
+                cancelToken = setInterval(mainLoop, 4);
+            });
             
         }
 

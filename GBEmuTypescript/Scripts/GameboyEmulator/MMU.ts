@@ -1,4 +1,6 @@
-﻿module GameboyEmulator{
+﻿/// <reference path="..\jquery.d.ts" />
+
+module GameboyEmulator{
     export var zeroPad = function (number: string, length: number) {
         while (number.length < length) number = '0' + number;
         return number
@@ -38,11 +40,10 @@
         
 
         constructor () {
-            this.reset();
             this.ioMap = new IOMap(this);
         }
 
-        reset() {
+        reset(complete: () => void) {
             this.isInBios = true;
 
             for (var i = 0; i < 0x1FFF; ++i) {
@@ -55,6 +56,58 @@
                 this.zRam[i] = 0;
                 this.ioRegisters[i] = 0;
             }
+
+            $.ajax("/TestRoms/06-ld r,r.gb", {
+              beforeSend: (xhr) => {
+                (<any> xhr.overrideMimeType)("text/plain; charset=x-user-defined");
+              }
+            }).done((data) => {
+                for (var i = 0, strLen = data.length; i < strLen; i++) {
+                    this.rom[i] = data.charCodeAt(i) & 0xFF;
+                }
+                complete();
+
+                if (console && console.log) {
+                    console.log("Sample of data:", data.slice(0, 100));
+                }
+            });
+
+            //$.get("/TestRoms/06-ld r,r.gb", (data) => {
+            //    for (var i = 0, strLen = data.length; i < strLen; i++) {
+            //        this.rom[i] = data.charCodeAt(i);
+            //    }
+
+            //    complete();
+            //});
+        }
+
+        // stolen from http://langweiligeszeug.tumblr.com/post/14830476496/stringtobytes-javascript-performance
+        private stringToBytes(input: string) {
+            var charCode: number;
+            var stack: number[];
+            var result: number[] = [];
+            var j = 0;
+            for (var i = 0; i < input.length; i++) {
+                charCode = input.charCodeAt(i);
+                if (charCode < 127) {
+                    result[j++] = charCode & 0xFF;
+                }
+                else {
+                    stack = [];    // clear stack
+                    do {
+                        stack.push(charCode & 0xFF);  // push byte to stack
+                        charCode = charCode >> 8;          // shift value down by 1 byte
+                    }
+                    while (charCode);
+                    // add stack contents to result
+                    // done because chars have "wrong" endianness
+                    stack = stack.reverse();
+                    for (var k = 0; k < stack.length; ++k)
+                        result[j++] = stack[k];
+                }
+            }
+            // return an array of bytes
+            return result;
         }
 
         readByte(address: number) {
@@ -66,10 +119,10 @@
             // Is in ROM0 or ROM1
             if (address <= 0x7FFF) {
                 if (address >= 0x104 && address <= 0x0133) {
-                    return this.bios[0x00A8 + (address - 0x104)]; // HACK! Redirecting this into the bios where the original Nintendo Logo lives.
+                    var test = this.bios[0x00A8 + (address - 0x104)]; // HACK! Redirecting this into the bios where the original Nintendo Logo lives.
                 }
 
-                return 0;   // Rom not implemented yet.
+                return this.rom[address];   // Rom not implemented yet.
             }
 
             // Video RAM
@@ -167,6 +220,11 @@
             // Hardware IO Registers
             if (address <= 0xFF7F) {
                 this.ioRegisters[address - 0xFF00] = value;
+
+                // disable bios
+                if(this.isInBios && address === 0xFF50 && value === 1)
+                    this.isInBios = false;
+
                 return;
             }
 

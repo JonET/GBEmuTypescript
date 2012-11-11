@@ -70,6 +70,17 @@
     <Content Include="Scripts\GameboyEmulator\GPU.js.map">
       <DependentUpon>GPU.ts</DependentUpon>
     </Content>
+    <Content Include="TestRoms\01-special.gb" />
+    <Content Include="TestRoms\02-interrupts.gb" />
+    <Content Include="TestRoms\03-op sp,hl.gb" />
+    <Content Include="TestRoms\04-op r,imm.gb" />
+    <Content Include="TestRoms\05-op rp.gb" />
+    <Content Include="TestRoms\06-ld r,r.gb" />
+    <Content Include="TestRoms\07-jr,jp,call,ret,rst.gb" />
+    <Content Include="TestRoms\08-misc instrs.gb" />
+    <Content Include="TestRoms\09-op r,r.gb" />
+    <Content Include="TestRoms\10-bit ops.gb" />
+    <Content Include="TestRoms\11-op a,%28hl%29.gb" />
     <None Include="web.Release.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
