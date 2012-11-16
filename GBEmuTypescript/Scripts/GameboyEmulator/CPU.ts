@@ -2,7 +2,7 @@
 
 module GameboyEmulator {
 
-    // Emulates a Gameboy Z80
+    // Emulates a Gameboy Z80 (LR35902)
     export class CPU {
         private mmu: MMU;
         private _opcodeMap: { (c: CPU): void; }[];
@@ -147,11 +147,6 @@ module GameboyEmulator {
             /*Dx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Dx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
             /*Ex*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Ex*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,
             /*Fx*/  this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,   /*Fx*/ this.notImpl,        this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl,       this.notImpl];
-
-            //this._cbMap = {
-            //    0x7C: this.BIT_7H,
-            //    0x11: this.CB_RL_C
-            //};
         }
 
         step() {
