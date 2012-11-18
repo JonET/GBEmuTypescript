@@ -241,7 +241,7 @@ module GameboyEmulator{
         }
     }
 
-    class IOMap {
+    export class IOMap {
         private mmu: MMU;
 
         constructor (mmu: MMU) {
